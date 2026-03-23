@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: fakenews-api
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount model files from host so you don't need to rebuild on checkpoint updates
+      - ./models:/app/models:ro
+    environment:
+      - MODEL_DIR=/app/models
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s   # give XLM-R time to download on first run

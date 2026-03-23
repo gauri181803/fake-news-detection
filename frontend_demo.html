@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>NewsCheck — Multilingual News Verification</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@300;400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --ink:      #0a0a0a;
+  --paper:    #f5f2eb;
+  --cream:    #ede9de;
+  --red:      #c0392b;
+  --green:    #1a6b3c;
+  --gold:     #b8860b;
+  --mid:      #666;
+  --border:   #d4cfc4;
+  --card:     #ffffff;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Source Sans 3',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;}
+
+/* TICKER */
+.ticker-wrap{background:var(--ink);color:#f5f2eb;overflow:hidden;height:34px;display:flex;align-items:center;position:sticky;top:0;z-index:100;}
+.ticker-label{background:var(--red);color:#fff;font-family:'JetBrains Mono',monospace;font-size:.68rem;font-weight:600;letter-spacing:.12em;padding:0 16px;height:100%;display:flex;align-items:center;white-space:nowrap;flex-shrink:0;text-transform:uppercase;position:relative;z-index:10;}
+.ticker-track{display:flex;animation:ticker 32s linear infinite;white-space:nowrap;}
+.ticker-track span{font-size:.7rem;letter-spacing:.04em;padding:0 44px;opacity:.8;}
+.ticker-track span::before{content:'◆';margin-right:14px;color:var(--red);font-size:.45rem;}
+@keyframes ticker{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+
+/* MASTHEAD */
+.masthead{border-bottom:3px double var(--border);padding:20px 48px 16px;display:flex;align-items:flex-end;justify-content:space-between;background:var(--paper);}
+.brand-name{font-family:'Playfair Display',serif;font-size:3rem;font-weight:900;letter-spacing:-.02em;line-height:1;color:var(--ink);}
+.brand-name span{color:var(--red);}
+.brand-tagline{font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--mid);margin-top:5px;}
+.brand-hindi{font-size:.8rem;color:var(--mid);margin-top:3px;letter-spacing:.05em;}
+.masthead-right{text-align:right;font-size:.7rem;color:var(--mid);line-height:2;}
+.masthead-right strong{font-family:'JetBrains Mono',monospace;font-size:.65rem;}
+.api-dot{font-size:.9rem;}
+
+/* SECTION BAND */
+.section-band{background:var(--ink);color:#fff;display:flex;align-items:center;gap:14px;padding:9px 48px;}
+.section-band-label{font-family:'Playfair Display',serif;font-size:.82rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;}
+.band-rule{flex:1;height:1px;background:rgba(255,255,255,.15);}
+
+/* LAYOUT */
+.page{display:grid;grid-template-columns:1fr 320px;max-width:1080px;margin:0 auto;padding:30px 48px;gap:0;}
+
+/* LEFT */
+.left{padding-right:34px;border-right:1px solid var(--border);}
+.pane-title{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;margin-bottom:4px;}
+.pane-sub{font-size:.78rem;color:var(--mid);margin-bottom:20px;line-height:1.55;}
+
+.supported-langs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+.lang-pill{background:var(--cream);border:1px solid var(--border);border-radius:20px;padding:3px 12px;font-size:.7rem;color:var(--mid);letter-spacing:.03em;}
+
+textarea{width:100%;min-height:185px;background:var(--cream);border:1px solid var(--border);border-radius:4px;font-family:'Source Sans 3',sans-serif;font-size:.97rem;line-height:1.65;padding:14px;color:var(--ink);resize:vertical;outline:none;transition:border-color .2s;}
+textarea:focus{border-color:var(--ink);}
+textarea::placeholder{color:#aaa;}
+
+.input-foot{display:flex;align-items:center;justify-content:space-between;margin-top:9px;}
+.char-count{font-family:'JetBrains Mono',monospace;font-size:.67rem;color:var(--mid);}
+.api-row{display:flex;align-items:center;gap:6px;font-size:.68rem;color:var(--mid);}
+.api-row input{background:var(--cream);border:1px solid var(--border);border-radius:3px;padding:3px 8px;font-size:.67rem;font-family:'JetBrains Mono',monospace;color:var(--ink);width:168px;outline:none;}
+
+.verify-btn{width:100%;margin-top:14px;padding:14px;background:var(--ink);color:#fff;border:none;border-radius:4px;font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;letter-spacing:.07em;cursor:pointer;transition:background .15s,transform .1s;display:flex;align-items:center;justify-content:center;gap:10px;}
+.verify-btn:hover:not(:disabled){background:#1c1c1c;}
+.verify-btn:active:not(:disabled){transform:scale(.98);}
+.verify-btn:disabled{opacity:.45;cursor:not-allowed;}
+
+/* ERROR */
+.err-box{margin-top:12px;background:#fff0ee;border:1px solid #f5c6c0;border-radius:4px;padding:10px 14px;font-size:.8rem;color:var(--red);display:none;}
+
+/* VERDICT */
+.verdict{margin-top:22px;border:2px solid var(--ink);border-radius:4px;overflow:hidden;display:none;animation:fadeUp .3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.vhdr{display:flex;align-items:center;justify-content:space-between;padding:15px 20px;}
+.vhdr.FAKE{background:var(--red);color:#fff;}
+.vhdr.REAL{background:var(--green);color:#fff;}
+.vhdr-left{display:flex;align-items:center;gap:14px;}
+.vicon{font-size:1.7rem;line-height:1;}
+.vtitle{font-family:'Playfair Display',serif;font-size:1.65rem;font-weight:900;letter-spacing:.04em;}
+.vsub{font-size:.75rem;opacity:.85;margin-top:2px;}
+.vconf{font-family:'Playfair Display',serif;font-size:2.1rem;font-weight:900;text-align:right;}
+.vconf small{font-family:'Source Sans 3',sans-serif;font-size:.68rem;font-weight:400;display:block;opacity:.8;}
+
+.vbody{padding:18px 20px;background:var(--card);}
+.score-row{display:flex;gap:10px;margin-bottom:16px;}
+.sbox{flex:1;border:1px solid var(--border);border-radius:3px;padding:10px 12px;text-align:center;}
+.sbox .sv{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;}
+.sbox .sl{font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mid);margin-top:2px;}
+.sbox.fake .sv{color:var(--red);}
+.sbox.real .sv{color:var(--green);}
+.sbox.lang .sv{font-size:.9rem;color:var(--ink);}
+
+.bar-labels{display:flex;justify-content:space-between;font-size:.68rem;color:var(--mid);margin-bottom:4px;}
+.bar-track{height:5px;background:var(--cream);border-radius:99px;overflow:hidden;margin-bottom:16px;}
+.bar-fill{height:100%;border-radius:99px;transition:width .6s ease;}
+.bar-fill.FAKE{background:var(--red);}
+.bar-fill.REAL{background:var(--green);}
+
+.ent-head{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--mid);font-weight:600;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border);}
+.ent-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--cream);font-size:.8rem;line-height:1.4;}
+.ent-item:last-child{border-bottom:none;}
+.ent-name{flex:1;font-weight:600;}
+.ent-desc{color:var(--mid);font-size:.73rem;}
+.ent-type{background:var(--cream);border-radius:2px;padding:1px 5px;font-size:.6rem;font-family:'JetBrains Mono',monospace;color:var(--mid);text-transform:uppercase;flex-shrink:0;}
+
+.expl{margin-top:14px;background:var(--cream);border-left:3px solid var(--gold);padding:10px 13px;font-size:.8rem;color:#444;line-height:1.6;border-radius:0 3px 3px 0;}
+
+/* SIDEBAR */
+.sidebar{padding-left:28px;}
+.sidebar-title{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;margin-bottom:3px;}
+.sidebar-sub{font-size:.7rem;color:var(--mid);margin-bottom:16px;}
+.hist-list{display:flex;flex-direction:column;gap:9px;}
+.hist-empty{font-size:.78rem;color:var(--mid);text-align:center;padding:32px 0;border:1px dashed var(--border);border-radius:4px;line-height:1.7;}
+.hist-item{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:10px 12px;cursor:pointer;transition:border-color .15s,box-shadow .15s;}
+.hist-item:hover{border-color:var(--ink);box-shadow:2px 2px 0 var(--ink);}
+.hist-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+.hist-verdict{font-family:'JetBrains Mono',monospace;font-size:.65rem;font-weight:600;letter-spacing:.08em;padding:2px 7px;border-radius:2px;}
+.hist-verdict.FAKE{background:var(--red);color:#fff;}
+.hist-verdict.REAL{background:var(--green);color:#fff;}
+.hist-conf{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--mid);}
+.hist-text{font-size:.76rem;color:#333;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.hist-meta{display:flex;justify-content:space-between;margin-top:5px;font-size:.62rem;color:var(--mid);font-family:'JetBrains Mono',monospace;}
+.clear-btn{width:100%;margin-top:12px;padding:7px;background:none;border:1px solid var(--border);border-radius:3px;font-size:.7rem;color:var(--mid);cursor:pointer;font-family:'Source Sans 3',sans-serif;transition:all .15s;}
+.clear-btn:hover{border-color:var(--red);color:var(--red);}
+
+/* SPINNER */
+.spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+@media(max-width:700px){
+  .page{grid-template-columns:1fr;padding:18px;}
+  .left{padding-right:0;border-right:none;border-bottom:1px solid var(--border);padding-bottom:28px;margin-bottom:28px;}
+  .sidebar{padding-left:0;}
+  .masthead{padding:14px 18px;flex-direction:column;align-items:flex-start;gap:10px;}
+  .section-band{padding:9px 18px;}
+  footer{padding:14px 18px;flex-direction:column;gap:6px;text-align:center;}
+}
+</style>
+</head>
+<body>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-label">LIVE VERIFICATION</div>
+  <div class="ticker-track">
+    <span>NewsCheck — AI-Powered Multilingual Fake News Detection</span>
+    <span>Supports Hindi · Marathi · Gujarati · Telugu — Auto Language Detection</span>
+    <span>Powered by XLM-RoBERTa Transformers + Heterogeneous Graph Neural Networks</span>
+    <span>Knowledge Verification via Wikidata · Explainable AI Results</span>
+    <span>REVA University · Cross-Lingual & Cross-Domain Fake News Detection</span>
+    <span>Verify news in Hindi · Marathi · Gujarati · Telugu</span>
+    <span>NewsCheck — AI-Powered Multilingual Fake News Detection</span>
+    <span>Supports Hindi · Marathi · Gujarati · Telugu — Auto Language Detection</span>
+    <span>Powered by XLM-RoBERTa Transformers + Heterogeneous Graph Neural Networks</span>
+    <span>Knowledge Verification via Wikidata · Explainable AI Results</span>
+    <span>REVA University · Cross-Lingual & Cross-Domain Fake News Detection</span>
+    <span>Verify news in Hindi · Marathi · Gujarati · Telugu</span>
+  </div>
+</div>
+
+<!-- MASTHEAD -->
+<div class="masthead">
+  <div>
+    <div class="brand-name">News<span>Check</span></div>
+    <div class="brand-tagline">Multilingual News Verification System</div>
+  </div>
+  <div class="masthead-right">
+    <div id="liveClock"></div>
+    <div>हिन्दी &nbsp;·&nbsp; मराठी &nbsp;·&nbsp; ગુજરાતી &nbsp;·&nbsp; తెలుగు</div>
+    <div><strong>API STATUS</strong> &nbsp;<span class="api-dot" id="apiDot">●</span> <span id="apiTxt">Checking...</span></div>
+  </div>
+</div>
+
+<!-- SECTION BAND -->
+<div class="section-band">
+  <span class="section-band-label">Verification Desk</span>
+  <div class="band-rule"></div>
+  <span class="section-band-label">समाचार सत्यापन</span>
+  <div class="band-rule"></div>
+  <span class="section-band-label">వార్తల తనిఖీ</span>
+  <div class="band-rule"></div>
+  <span class="section-band-label">સમાચાર ચકાસણી</span>
+</div>
+
+<!-- PAGE -->
+<div class="page">
+
+  <!-- LEFT -->
+  <div class="left">
+    <div class="pane-title">Submit Article for Verification</div>
+    <div class="pane-sub">
+      Paste any news article below. NewsCheck automatically detects the language and analyses
+      linguistic patterns, semantic context, and entity credibility using AI.
+    </div>
+
+    <div class="supported-langs">
+      <span class="lang-pill">🤖 Auto-detects language</span>
+      <span class="lang-pill">हिन्दी Hindi</span>
+      <span class="lang-pill">मराठी Marathi</span>
+      <span class="lang-pill">ગુજરાતી Gujarati</span>
+      <span class="lang-pill">తెలుగు Telugu</span>
+    </div>
+
+    <textarea id="newsText"
+      placeholder="यहाँ समाचार का पाठ दर्ज करें... / येथे बातमी टाका... / અહીં સમાચાર લખો... / ఇక్కడ వార్తలు నమోదు చేయండి..."
+      oninput="updateCount()"></textarea>
+
+    <div class="input-foot">
+      <div class="char-count"><span id="charCount">0</span> characters &nbsp;·&nbsp; Ctrl+Enter to submit</div>
+      <div class="api-row">API: <input id="apiUrl" type="text" value="http://localhost:8000"/></div>
+    </div>
+
+    <button class="verify-btn" id="verifyBtn" onclick="analyze()">
+      <span id="btnText">Verify Article</span>
+    </button>
+
+    <div class="err-box" id="errBox"></div>
+
+    <!-- VERDICT -->
+    <div class="verdict" id="verdict">
+      <div class="vhdr" id="vhdr">
+        <div class="vhdr-left">
+          <div class="vicon" id="vicon"></div>
+          <div>
+            <div class="vtitle" id="vtitle"></div>
+            <div class="vsub"  id="vsub"></div>
+          </div>
+        </div>
+        <div class="vconf"><span id="vconf"></span><small>confidence</small></div>
+      </div>
+      <div class="vbody">
+        <div class="score-row">
+          <div class="sbox fake"><div class="sv" id="sfake"></div><div class="sl">Fake Score</div></div>
+          <div class="sbox real"><div class="sv" id="sreal"></div><div class="sl">Real Score</div></div>
+          <div class="sbox lang"><div class="sv" id="slang"></div><div class="sl">Language</div></div>
+        </div>
+        <div class="bar-labels"><span>Credibility</span><span id="barPct"></span></div>
+        <div class="bar-track"><div class="bar-fill" id="barFill" style="width:0%"></div></div>
+        <div id="entSection"></div>
+        <div class="expl" id="expl"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-title">Verification History</div>
+    <div class="sidebar-sub">Click any entry to reload it</div>
+    <div class="hist-list" id="histList">
+      <div class="hist-empty">No verifications yet.<br/>Submit an article to begin.</div>
+    </div>
+    <button class="clear-btn" onclick="clearHist()">✕ Clear History</button>
+  </div>
+
+</div>
+
+<script>
+let histData = JSON.parse(localStorage.getItem('nc_hist') || '[]');
+
+// Clock
+function tick() {
+  document.getElementById('liveClock').textContent =
+    new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'}) +
+    ' · ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+setInterval(tick,1000); tick();
+
+// API status
+async function checkApi() {
+  const url = document.getElementById('apiUrl').value.trim().replace(/\/$/,'');
+  const dot = document.getElementById('apiDot');
+  const txt = document.getElementById('apiTxt');
+  try {
+    const r = await fetch(`${url}/health`,{signal:AbortSignal.timeout(4000)});
+    dot.style.color = r.ok ? '#1a6b3c' : '#c0392b';
+    txt.textContent = r.ok ? 'Online' : 'Error';
+  } catch { dot.style.color='#c0392b'; txt.textContent='Offline'; }
+}
+checkApi(); setInterval(checkApi,15000);
+
+// Char count
+function updateCount() {
+  document.getElementById('charCount').textContent =
+    document.getElementById('newsText').value.length;
+}
+
+// Analyze
+async function analyze() {
+  const text   = document.getElementById('newsText').value.trim();
+  const apiUrl = document.getElementById('apiUrl').value.trim().replace(/\/$/,'');
+  const btn    = document.getElementById('verifyBtn');
+  const err    = document.getElementById('errBox');
+  err.style.display='none';
+  document.getElementById('verdict').style.display='none';
+
+  if (text.length < 20) { showErr('Please enter at least 20 characters.'); return; }
+
+  btn.disabled=true;
+  document.getElementById('btnText').innerHTML='<div class="spinner"></div> Analysing...';
+
+  try {
+    const r = await fetch(`${apiUrl}/predict`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({text})
+    });
+    if (!r.ok) { const e=await r.json(); throw new Error(e.detail||`HTTP ${r.status}`); }
+    const d = await r.json();
+    renderVerdict(d);
+    addHist(d, text);
+  } catch(e) {
+    showErr(`${e.message} — Make sure the API server is running at ${apiUrl}`);
+  } finally {
+    btn.disabled=false;
+    document.getElementById('btnText').textContent='Verify Article';
+  }
+}
+
+function renderVerdict(d) {
+  const v = document.getElementById('verdict');
+  v.style.display='block';
+  v.scrollIntoView({behavior:'smooth',block:'nearest'});
+
+  const isFake = d.prediction==='FAKE';
+  const hdr    = document.getElementById('vhdr');
+  hdr.className = `vhdr ${d.prediction}`;
+
+  document.getElementById('vicon').textContent  = isFake ? '🚨' : '✅';
+  document.getElementById('vtitle').textContent = d.prediction;
+  document.getElementById('vsub').textContent   = `${d.language_name} · ${(d.confidence*100).toFixed(1)}% confidence`;
+  document.getElementById('vconf').textContent  = `${(d.confidence*100).toFixed(1)}%`;
+  document.getElementById('sfake').textContent  = `${(d.fake_score*100).toFixed(1)}%`;
+  document.getElementById('sreal').textContent  = `${(d.real_score*100).toFixed(1)}%`;
+  document.getElementById('slang').textContent  = d.language_name;
+
+  const pct = Math.round(d.confidence*100);
+  document.getElementById('barPct').textContent = `${pct}%`;
+  const bf = document.getElementById('barFill');
+  bf.style.width = `${pct}%`;
+  bf.className   = `bar-fill ${d.prediction}`;
+
+  const ents = d.entities_found||[];
+  const es   = document.getElementById('entSection');
+  if (ents.length) {
+    let h = `<div class="ent-head">Entity Verification · Wikidata</div>`;
+    ents.forEach(e => {
+      h += `<div class="ent-item">
+        <span>${e.wikidata_verified?'✔️':'❌'}</span>
+        <div style="flex:1">
+          <div class="ent-name">${e.entity}</div>
+          ${e.wikidata_description?`<div class="ent-desc">${e.wikidata_description}</div>`:''}
+        </div>
+        <span class="ent-type">${e.entity_type}</span>
+      </div>`;
+    });
+    es.innerHTML=h; es.style.display='block';
+  } else { es.style.display='none'; }
+
+  document.getElementById('expl').textContent = d.explanation;
+}
+
+// History
+function addHist(d, text) {
+  histData.unshift({
+    prediction:d.prediction, confidence:d.confidence,
+    language:d.language_name, text:text.substring(0,120),
+    time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})
+  });
+  if (histData.length>20) histData=histData.slice(0,20);
+  localStorage.setItem('nc_hist',JSON.stringify(histData));
+  renderHist();
+}
+
+function renderHist() {
+  const list = document.getElementById('histList');
+  if (!histData.length) {
+    list.innerHTML='<div class="hist-empty">No verifications yet.<br/>Submit an article to begin.</div>';
+    return;
+  }
+  list.innerHTML = histData.map((h,i) => `
+    <div class="hist-item" onclick="loadHist(${i})">
+      <div class="hist-top">
+        <span class="hist-verdict ${h.prediction}">${h.prediction}</span>
+        <span class="hist-conf">${(h.confidence*100).toFixed(1)}%</span>
+      </div>
+      <div class="hist-text">${h.text}${h.text.length>=120?'...':''}</div>
+      <div class="hist-meta"><span>${h.language}</span><span>${h.time}</span></div>
+    </div>`).join('');
+}
+
+function loadHist(i) {
+  document.getElementById('newsText').value=histData[i].text;
+  updateCount();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function clearHist() {
+  histData=[];
+  localStorage.removeItem('nc_hist');
+  renderHist();
+}
+
+function showErr(msg) {
+  const b=document.getElementById('errBox');
+  b.textContent=msg; b.style.display='block';
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  renderHist();
+  document.getElementById('newsText').addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)) analyze();
+  });
+});
+</script>
+</body>
+</html>
