@@ -17,7 +17,7 @@ fakenews_backend/
 │   ├── preprocessing.py  # NER, language detection, Wikidata queries
 │   └── schemas.py        # Pydantic request/response models
 ├── models/               # ← Place your .pth files here
-│   ├── hetero_rgcn_model_G.pth        (Hindi & Gujarati)
+│   ├── hetero_rgcn_model_G.pth        ( Gujarati)
 │   ├── hetero_rgcn_model_marathi.pth
 │   └── hetero_rgcn_model_telugu.pth
 ├── requirements.txt
