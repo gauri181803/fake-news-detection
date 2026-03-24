@@ -148,9 +148,7 @@ Prediction: FAKE / REAL + Confidence + Evidence
 | Language  | Test Accuracy | ROC-AUC | F1-Macro |
 |-----------|:-------------:|:-------:|:--------:|
 | Hindi     | 98.28%        | 0.9976  | 0.9827   |
-| Marathi   | ~96–98%       | —       | —        |
-| Gujarati  | ~96–98%       | —       | —        |
-| Telugu    | ~96–98%       | —       | —        |
+
 
 ---
 
@@ -162,9 +160,3 @@ Prediction: FAKE / REAL + Confidence + Evidence
 
 ---
 
-## Notes
-
-- The XLM-R model (~1.1 GB) downloads automatically from HuggingFace on first run.
-- Wikidata queries are cached in memory for the session lifetime.
-- The inference graph is built fresh for each article (no stored graph needed).
-- If a `.pth` file is missing, the API falls back to XLM-R + credibility heuristic only.
