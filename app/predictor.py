@@ -29,9 +29,9 @@ from app.schemas import PredictResponse, EntityEvidence
 MODEL_DIR = os.environ.get("MODEL_DIR", "models")
 
 LANG_MODEL_FILES: Dict[str, str] = {
-    "hi": "hetero_rgcn_model.pth",       # Hindi checkpoint
+    "hi": "hetero_rgcn_model_hindi.pth",
     "mr": "hetero_rgcn_model_marathi.pth",
-    "gu": "hetero_rgcn_model_G.pth",       # Gujarati 
+    "gu": "hetero_rgcn_model_gujarati.pth",
     "te": "hetero_rgcn_model_telugu.pth",
 }
 
